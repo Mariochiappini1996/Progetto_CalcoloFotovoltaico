@@ -1,7 +1,7 @@
-# SunPark: Simulatore di Calcolo Fotovoltaico
+# Simulatore di Calcolo Fotovoltaico
 
 ## Architettura del Sistema
-L'architettura è suddivisa in due macro-componenti principali: il backend computazionale e l'interfaccia utente (frontend), orchestrati tramite engine di containerizzazione.
+L'architettura è suddivisa in due macro-componenti principali: il backend computazionale e l'interfaccia utente (frontend), orchestrati tramite Docker.
 
 ### 1. Livello di Backend (REST API)
 Il core computazionale è implementato in Python utilizzando **FastAPI**. 
@@ -15,7 +15,7 @@ Il core computazionale è implementato in Python utilizzando **FastAPI**.
   * PR è il Performance Ratio, fissato precauzionalmente a uno scalare di 0.75 per modellare le perdite di sistema (termiche, inverte, cablaggio).
 * **Server ASGI:** Il servizio è servito tramite `uvicorn`, garantendo la gestione asincrona delle richieste concorrenti sulla porta 8000.
 
-[ Informazioni richieste a ChatGPT ]
+[ Informazioni prodotte da LLM ]
 
 ### 2. Livello di Frontend (Interfaccia Utente)
 Il client è sviluppato in modalità Single Page Application (SPA) monolitica, utilizzando HTML5, CSS3 (con variabili native) e JavaScript (Vanilla).
