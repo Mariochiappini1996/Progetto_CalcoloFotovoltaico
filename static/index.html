@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore SunPark</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary: #f39c12;
+            --primary-hover: #e67e22;
+            --secondary: #2980b9;
+            --secondary-hover: #3498db;
+            --bg-color: #f9fafb;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --success-bg: #f0fdf4;
+            --success-border: #bbf7d0;
+        }
+
+        body { 
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            margin: 0;
+        }
+
+        #content-to-print {
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            max-width: 450px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0 0 8px 0;
+            text-align: center;
+            color: #111827;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            margin-bottom: 24px;
+            box-sizing: border-box;
+            background-color: #f9fafb;
+            transition: all 0.2s ease;
+        }
+
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.15);
+        }
+
+        button { 
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 14px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: background-color 0.2s ease;
+        }
+
+        button[type="submit"] {
+            background-color: var(--primary);
+            color: white;
+            margin-top: 8px;
+        }
+
+        button[type="submit"]:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .card { 
+            background-color: var(--success-bg);
+            border: 1px solid var(--success-border);
+            padding: 24px; 
+            border-radius: 8px; 
+            margin-top: 32px; 
+        }
+
+        .card h3 {
+            margin: 0 0 16px 0;
+            color: #166534;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .card p {
+            display: flex;
+            justify-content: space-between;
+            margin: 12px 0 0 0;
+            font-size: 15px;
+            border-bottom: 1px solid #dcfce7;
+            padding-bottom: 8px;
+        }
+
+        .card p:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        #pdfBtn {
+            max-width: 450px;
+            background-color: var(--secondary);
+            color: white;
+            margin-top: 24px;
+        }
+
+        #pdfBtn:hover {
+            background-color: var(--secondary-hover);
+        }
+    </style>
+</head>
+<body>
+    <div id="content-to-print">
+        <h1>Simulatore SunPark</h1>
+        <p class="subtitle">Inserisci i parametri per calcolare la produttività dell'impianto residenziale.</p>
+
+        <form id="simForm">
+            <label for="potenza">Potenza Impianto (kWp)</label>
+            <input type="number" id="potenza" step="0.1" placeholder="es. 3.0" required>
+
+            <label for="zona">Zona Geografica</label>
+            <select id="zona">
+                <option value="Nord">Nord Italia</option>
+                <option value="Centro">Centro Italia</option>
+                <option value="Sud">Sud Italia / Isole</option>
+            </select>
+
+            <button type="submit">Calcola Produttività</button>
+        </form>
+
+        <div id="result" class="card" style="display:none;">
+            <h3>Risultati Simulazione</h3>
+            <p><span>Produzione Annua:</span> <strong><span id="prod"></span> kWh</strong></p>
+            <p><span>Risparmio Stimato:</span> <strong><span id="risp"></span> €</strong></p>
+        </div>
+    </div>
+
+    <button onclick="downloadPDF()" id="pdfBtn" style="display:none;">Scarica Report PDF</button>
+
+    <script>
+        document.getElementById('simForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                potenza: parseFloat(document.getElementById('potenza').value),
+                Zona_interesse: document.getElementById('zona').value
+            };
+
+            try {
+                const response = await fetch('/api/simulate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    console.error('API error:', err);
+                    alert('Errore API: ' + JSON.stringify(err));
+                    return;
+                }
+
+                const data = await response.json();
+                const produzione = data.risultati.produzione_annua_kwh ?? data.risultati.produzione_annua_kWh;
+
+                document.getElementById('prod').innerText = produzione;
+                document.getElementById('risp').innerText = (produzione * 0.20).toFixed(2);
+
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('pdfBtn').style.display = 'block';
+            } catch (error) {
+                console.error(error);
+                alert('Errore di connessione. Riprova.');
+            }
+        });
+
+        function downloadPDF() {
+            const element = document.getElementById('content-to-print');
+            
+            // Opzioni per migliorare la qualità del PDF generato
+            const opt = {
+                margin:       10,
+                filename:     'Simulazione_SunPark.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>

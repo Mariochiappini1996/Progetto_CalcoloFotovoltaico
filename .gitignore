@@ -1,0 +1,11 @@
+# Created by venv; see https://docs.python.org/2/library/venv.html
+# Ignora i file del Virtual Environment
+bin/
+include/
+lib/
+lib64/
+pyvenv.cfg
+__pycache__/
+
+# Ignora eventuali file di sistema
+.DS_Store
